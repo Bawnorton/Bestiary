@@ -1,6 +1,9 @@
 package com.bawnorton;
 
+import com.bawnorton.keybind.Keybinds;
+import com.bawnorton.screen.BestiaryScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,12 +13,15 @@ public class BestiaryClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		LOGGER.info("Client initialized");
 		Keybinds.init();
+		LOGGER.info("Client initialized");
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+			EntityDirectory.init();
+			LOGGER.info("Entity directory initialized");
+		});
 	}
 
 	public static void openBestiary() {
-		LOGGER.info("Opening bestiary");
 		MinecraftClient.getInstance().setScreen(new BestiaryScreen());
 	}
 }

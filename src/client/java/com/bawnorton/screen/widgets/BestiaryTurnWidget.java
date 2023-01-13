@@ -1,7 +1,7 @@
-package com.bawnorton;
+package com.bawnorton.screen.widgets;
 
+import com.bawnorton.screen.BestiaryScreen;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.screen.ingame.BookScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.sound.PositionedSoundInstance;

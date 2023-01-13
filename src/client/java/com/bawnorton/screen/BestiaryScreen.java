@@ -1,23 +1,35 @@
-package com.bawnorton;
+package com.bawnorton.screen;
 
+import com.bawnorton.Bestiary;
+import com.bawnorton.BestiaryContent;
+import com.bawnorton.Entry;
+import com.bawnorton.screen.widgets.BestiaryTurnWidget;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +46,9 @@ public class BestiaryScreen extends Screen {
     @Nullable
     private BestiaryScreen.PageContent pageContent;
     private Text pageIndicatorText;
+    private int scale;
+    private int x;
+    private int y;
 
     public BestiaryScreen() {
         super(NarratorManager.EMPTY);
@@ -47,11 +62,41 @@ public class BestiaryScreen extends Screen {
 
     protected void init() {
         this.invalidatePageContent();
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("bestiary.close"), (button -> close())).dimensions(this.width / 2 - 100, 196, 98, 20).build());
         int i = (this.width - WIDTH) / 2;
         int j = Math.max(153, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 151);
         this.nextPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + WIDTH - 31, j, true, (button) -> this.openNextPage(), true));
         this.previousPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + 11, j - 1, false, (button) -> this.openPreviousPage(), true));
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Increment"), (button) -> {
+            scale++;
+            if(scale >= 100) scale = 0;
+            Bestiary.LOGGER.info("Scale: " + scale);
+        }).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Decrement"), (button) -> {
+            scale--;
+            if(scale <= 0) scale = 100;
+            Bestiary.LOGGER.info("Scale: " + scale);
+        }).position(0, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("X+"), (button) -> {
+            x++;
+            Bestiary.LOGGER.info("X: " + x);
+        }).position(0, 40).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("X-"), (button) -> {
+            x--;
+            Bestiary.LOGGER.info("X: " + x);
+        }).position(0, 60).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Y+"), (button) -> {
+            y++;
+            Bestiary.LOGGER.info("Y: " + y);
+        }).position(0, 80).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Y-"), (button) -> {
+            y--;
+            Bestiary.LOGGER.info("Y: " + y);
+        }).position(0, 100).build());
+
+        List<Entry> entries = BestiaryContent.getActivePages();
+        for(Entry entry : entries) {
+            this.pages.add(entry.getDescription());
+        }
         this.updateButtons();
     }
 
@@ -68,7 +113,6 @@ public class BestiaryScreen extends Screen {
         if (this.currentPage < this.countPages() - 1) {
             ++this.currentPage;
         } else {
-            this.appendNewPage();
             if (this.currentPage < this.countPages() - 1) {
                 ++this.currentPage;
             }
@@ -79,27 +123,17 @@ public class BestiaryScreen extends Screen {
     }
 
     private void updateButtons() {
-//        this.previousPageButton.visible = this.currentPage > 0;
-//        this.nextPageButton.visible = this.currentPage < this.countPages() - 1;
-        this.previousPageButton.visible = true;
-        this.nextPageButton.visible = true;
+        this.previousPageButton.visible = this.currentPage > 0;
+        this.nextPageButton.visible = this.currentPage < this.countPages() - 1;
     }
 
-    private void appendNewPage() {
-        if (this.countPages() < 100) {
-            this.pages.add("");
-        }
+    private Entry getCurrentEntry() {
+        List<Entry> entries = BestiaryContent.getActivePages();
+        return entries.get(currentPage);
     }
 
     private String getCurrentPageContent() {
-        return this.currentPage >= 0 && this.currentPage < this.pages.size() ? this.pages.get(this.currentPage) : "";
-    }
-
-    private void setPageContent(String newContent) {
-        if (this.currentPage >= 0 && this.currentPage < this.pages.size()) {
-            this.pages.set(this.currentPage, newContent);
-            this.invalidatePageContent();
-        }
+        return getCurrentEntry().getDescription();
     }
 
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
@@ -123,8 +157,53 @@ public class BestiaryScreen extends Screen {
             BestiaryScreen.Line line = var15[m];
             this.textRenderer.draw(matrices, line.text, (float)line.x, (float)line.y, -16777216);
         }
+        Entry entry = getCurrentEntry();
+        LivingEntity entity = entry.getEntity();
+        drawEntity(i + WIDTH / 4 + entry.getX(), j + HEIGHT / 2 + entry.getY(), entry.getSize(), entity);
 
         super.render(matrices, mouseX, mouseY, delta);
+    }
+
+    public void drawEntity(int x, int y, int size, LivingEntity entity) {
+        MatrixStack matrixStack = RenderSystem.getModelViewStack();
+        matrixStack.push();
+        matrixStack.translate((float)x, (float)y, 1050F);
+        matrixStack.scale(1.0F, 1.0F, -1.0F);
+        RenderSystem.applyModelViewMatrix();
+        MatrixStack matrixStack2 = new MatrixStack();
+        matrixStack2.translate(0.0F, 0.0F, 1000.0F);
+        matrixStack2.scale((float)size, (float)size, (float)size);
+        Quaternionf quaternionf = (new Quaternionf()).rotateZ(3.1415927F);
+        Quaternionf quaternionf2 = (new Quaternionf()).rotateX((float) (-30 * Math.PI / 180));
+        quaternionf.mul(quaternionf2);
+        matrixStack2.multiply(quaternionf);
+        float h = entity.bodyYaw;
+        float i = entity.getYaw();
+        float j = entity.getPitch();
+        float k = entity.prevHeadYaw;
+        float l = entity.headYaw;
+        entity.bodyYaw = 135F;
+        entity.setYaw(135F);
+        entity.setPitch(0F);
+        entity.headYaw = entity.getYaw();
+        entity.prevHeadYaw = entity.getYaw();
+        RenderSystem.setShaderLights(new Vector3f(-0.2F, 1.0F, -1.0F), new Vector3f(0.2F, -1.0F, 0.0F));
+        EntityRenderDispatcher entityRenderDispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
+        quaternionf2.conjugate();
+        entityRenderDispatcher.setRotation(quaternionf2);
+        entityRenderDispatcher.setRenderShadows(false);
+        VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        entityRenderDispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 1.0F, matrixStack2, immediate, 16777215);
+        immediate.draw();
+        entityRenderDispatcher.setRenderShadows(true);
+        entity.bodyYaw = h;
+        entity.setYaw(i);
+        entity.setPitch(j);
+        entity.prevHeadYaw = k;
+        entity.headYaw = l;
+        matrixStack.pop();
+        RenderSystem.applyModelViewMatrix();
+        DiffuseLighting.enableGuiDepthLighting();
     }
 
     private void changePage() {
@@ -145,7 +224,7 @@ public class BestiaryScreen extends Screen {
 
 
     private BestiaryScreen.Position absolutePositionToScreenPosition(BestiaryScreen.Position position) {
-        return new BestiaryScreen.Position(position.x + (this.width - WIDTH) / 2 + 36, position.y + 32);
+        return new BestiaryScreen.Position(position.x + (this.width - WIDTH) / 2 + WIDTH / 2 + 10, Math.max(position.y + 32, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + position.y + 34));
     }
 
     private BestiaryScreen.PageContent createPageContent() {
@@ -157,7 +236,7 @@ public class BestiaryScreen extends Screen {
             MutableInt mutableInt = new MutableInt();
             MutableBoolean mutableBoolean = new MutableBoolean();
             TextHandler textHandler = this.textRenderer.getTextHandler();
-            textHandler.wrapLines(string, 114, Style.EMPTY, true, (style, start, end) -> {
+            textHandler.wrapLines(string, 100, Style.EMPTY, true, (style, start, end) -> {
                 int i = mutableInt.getAndIncrement();
                 String stringx = string.substring(start, end);
                 mutableBoolean.setValue(stringx.endsWith("\n"));
