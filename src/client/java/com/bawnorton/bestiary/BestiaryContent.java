@@ -1,4 +1,7 @@
-package com.bawnorton;
+package com.bawnorton.bestiary;
+
+import com.bawnorton.Bestiary;
+import net.minecraft.registry.Registries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +12,7 @@ public class BestiaryContent {
     private static final List<Entry> ACTIVE_PAGES = new ArrayList<>();
 
     public static void init() {
+        Bestiary.LOGGER.info(EntityDirectory.getEntryList().size() + " entries found.");
         ACTIVE_PAGES.addAll(EntityDirectory.getEntryList());
     }
 

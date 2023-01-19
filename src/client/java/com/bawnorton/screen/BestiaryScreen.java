@@ -1,8 +1,7 @@
 package com.bawnorton.screen;
 
-import com.bawnorton.Bestiary;
-import com.bawnorton.BestiaryContent;
-import com.bawnorton.Entry;
+import com.bawnorton.bestiary.BestiaryContent;
+import com.bawnorton.bestiary.Entry;
 import com.bawnorton.screen.widgets.BestiaryTurnWidget;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,7 +10,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -23,7 +21,6 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -38,7 +35,7 @@ public class BestiaryScreen extends Screen {
     private final int WIDTH = 256;
     private final int HEIGHT = 176;
 
-    public static final Identifier TEXTURE = new Identifier("bestiary", "textures/gui/bestiary.png");
+    public static final Identifier TEXTURE = new Identifier("bestiary", "textures/gui/bestiary_debug.png");
     private int currentPage;
     private final List<String> pages = Lists.newArrayList();
     private BestiaryTurnWidget nextPageButton;
@@ -46,9 +43,6 @@ public class BestiaryScreen extends Screen {
     @Nullable
     private BestiaryScreen.PageContent pageContent;
     private Text pageIndicatorText;
-    private int scale;
-    private int x;
-    private int y;
 
     public BestiaryScreen() {
         super(NarratorManager.EMPTY);
@@ -66,32 +60,6 @@ public class BestiaryScreen extends Screen {
         int j = Math.max(153, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 151);
         this.nextPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + WIDTH - 31, j, true, (button) -> this.openNextPage(), true));
         this.previousPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + 11, j - 1, false, (button) -> this.openPreviousPage(), true));
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Increment"), (button) -> {
-            scale++;
-            if(scale >= 100) scale = 0;
-            Bestiary.LOGGER.info("Scale: " + scale);
-        }).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Decrement"), (button) -> {
-            scale--;
-            if(scale <= 0) scale = 100;
-            Bestiary.LOGGER.info("Scale: " + scale);
-        }).position(0, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("X+"), (button) -> {
-            x++;
-            Bestiary.LOGGER.info("X: " + x);
-        }).position(0, 40).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("X-"), (button) -> {
-            x--;
-            Bestiary.LOGGER.info("X: " + x);
-        }).position(0, 60).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Y+"), (button) -> {
-            y++;
-            Bestiary.LOGGER.info("Y: " + y);
-        }).position(0, 80).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Y-"), (button) -> {
-            y--;
-            Bestiary.LOGGER.info("Y: " + y);
-        }).position(0, 100).build());
 
         List<Entry> entries = BestiaryContent.getActivePages();
         for(Entry entry : entries) {
@@ -129,6 +97,7 @@ public class BestiaryScreen extends Screen {
 
     private Entry getCurrentEntry() {
         List<Entry> entries = BestiaryContent.getActivePages();
+        if(entries.size() == 0 || entries.size() <= currentPage) return Entry.EMPTY;
         return entries.get(currentPage);
     }
 
@@ -158,8 +127,9 @@ public class BestiaryScreen extends Screen {
             this.textRenderer.draw(matrices, line.text, (float)line.x, (float)line.y, -16777216);
         }
         Entry entry = getCurrentEntry();
-        LivingEntity entity = entry.getEntity();
-        drawEntity(i + WIDTH / 4 + entry.getX(), j + HEIGHT / 2 + entry.getY(), entry.getSize(), entity);
+        if(!entry.equals(Entry.EMPTY)) {
+            drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2, 40, entry.getEntity());
+        }
 
         super.render(matrices, mouseX, mouseY, delta);
     }
@@ -193,7 +163,9 @@ public class BestiaryScreen extends Screen {
         entityRenderDispatcher.setRotation(quaternionf2);
         entityRenderDispatcher.setRenderShadows(false);
         VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+        entityRenderDispatcher.setRenderHitboxes(true);
         entityRenderDispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 1.0F, matrixStack2, immediate, 16777215);
+        entityRenderDispatcher.setRenderHitboxes(false);
         immediate.draw();
         entityRenderDispatcher.setRenderShadows(true);
         entity.bodyYaw = h;
