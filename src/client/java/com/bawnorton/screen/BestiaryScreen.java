@@ -1,5 +1,6 @@
 package com.bawnorton.screen;
 
+import com.bawnorton.Bestiary;
 import com.bawnorton.bestiary.BestiaryContent;
 import com.bawnorton.bestiary.Entry;
 import com.bawnorton.screen.widgets.BestiaryTurnWidget;
@@ -10,6 +11,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -17,6 +19,7 @@ import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -43,6 +46,8 @@ public class BestiaryScreen extends Screen {
     @Nullable
     private BestiaryScreen.PageContent pageContent;
     private Text pageIndicatorText;
+
+    private float scale = 1F;
 
     public BestiaryScreen() {
         super(NarratorManager.EMPTY);
@@ -128,7 +133,7 @@ public class BestiaryScreen extends Screen {
         }
         Entry entry = getCurrentEntry();
         if(!entry.equals(Entry.EMPTY)) {
-            drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2, 40, entry.getEntity());
+            drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2 - entry.getYOffset(), entry.getSize(), entry.getEntity());
         }
 
         super.render(matrices, mouseX, mouseY, delta);
