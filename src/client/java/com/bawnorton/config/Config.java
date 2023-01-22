@@ -90,9 +90,7 @@ public class Config {
             Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ZOMBIE), 1.2F, 0, "ZOMBIE"),
             Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ZOMBIE_HORSE), 1.4F, 0, "ZOMBIE_HORSE"),
             Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ZOMBIE_VILLAGER), 1.2F, 0, "ZOMBIE_VILLAGER"),
-            Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ZOMBIFIED_PIGLIN), 1.2F, 0, "ZOMBIFIED_PIGLIN"),
-
-            Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ITEM), 0.5F, 0, "ITEM")
+            Entry.of(Registries.ENTITY_TYPE.getId(EntityType.ZOMBIFIED_PIGLIN), 1.2F, 0, "ZOMBIFIED_PIGLIN")
     );
 
     public static Config getInstance() {
