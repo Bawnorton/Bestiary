@@ -1,7 +1,8 @@
 package com.bawnorton.bestiary;
 
-import com.bawnorton.Bestiary;
-import net.minecraft.registry.Registries;
+import com.bawnorton.BestiaryClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,24 +10,24 @@ import java.util.List;
 import java.util.Map;
 
 public class BestiaryContent {
-    private static final List<Entry> ACTIVE_PAGES = new ArrayList<>();
+    public static final Map<EntityType<? extends Entity>, BestiaryEntry> ENTRIES = new HashMap<>();
+    private static final List<BestiaryEntry> ACTIVE_PAGES = new ArrayList<>();
 
     public static void init() {
-        Bestiary.LOGGER.info(EntityDirectory.getEntryList().size() + " entries found.");
-        ACTIVE_PAGES.addAll(EntityDirectory.getEntryList());
+        BestiaryClient.LOGGER.info(ENTRIES.size() + " entries found.");
+        ACTIVE_PAGES.addAll(ENTRIES.values());
     }
 
     public static void filter(String searchTerm) {
-        List<Entry> entries = EntityDirectory.getEntryList();
-        Map<Integer, Entry> filtered = new HashMap<>();
+        Map<Integer, BestiaryEntry> filtered = new HashMap<>();
         int i = 0;
-        for(Entry entry: entries) {
-            if (entry.getName().toLowerCase().contains(searchTerm.toLowerCase())) {
-                filtered.put(i++, entry);
+        for (BestiaryEntry bestiaryEntry : ENTRIES.values()) {
+            if (bestiaryEntry.getName().toLowerCase().contains(searchTerm.toLowerCase())) {
+                filtered.put(i++, bestiaryEntry);
                 continue;
             }
-            if(entry.getDescription().toLowerCase().contains(searchTerm.toLowerCase())) {
-                filtered.put(i++, entry);
+            if (bestiaryEntry.getDescription().toLowerCase().contains(searchTerm.toLowerCase())) {
+                filtered.put(i++, bestiaryEntry);
             }
         }
         ACTIVE_PAGES.clear();
@@ -38,7 +39,7 @@ public class BestiaryContent {
         init();
     }
 
-    public static List<Entry> getActivePages() {
+    public static List<BestiaryEntry> getActivePages() {
         return ACTIVE_PAGES;
     }
 }

@@ -1,8 +1,7 @@
 package com.bawnorton.screen;
 
-import com.bawnorton.Bestiary;
 import com.bawnorton.bestiary.BestiaryContent;
-import com.bawnorton.bestiary.Entry;
+import com.bawnorton.bestiary.BestiaryEntry;
 import com.bawnorton.screen.widgets.BestiaryTurnWidget;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,7 +10,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -19,7 +17,6 @@ import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -35,19 +32,16 @@ import java.util.List;
 import java.util.Objects;
 
 public class BestiaryScreen extends Screen {
+    public static final Identifier TEXTURE = new Identifier("bestiary", "textures/gui/bestiary_debug.png");
     private final int WIDTH = 256;
     private final int HEIGHT = 176;
-
-    public static final Identifier TEXTURE = new Identifier("bestiary", "textures/gui/bestiary_debug.png");
-    private int currentPage;
     private final List<String> pages = Lists.newArrayList();
+    private int currentPage;
     private BestiaryTurnWidget nextPageButton;
     private BestiaryTurnWidget previousPageButton;
     @Nullable
     private BestiaryScreen.PageContent pageContent;
     private Text pageIndicatorText;
-
-    private float scale = 1F;
 
     public BestiaryScreen() {
         super(NarratorManager.EMPTY);
@@ -66,9 +60,9 @@ public class BestiaryScreen extends Screen {
         this.nextPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + WIDTH - 31, j, true, (button) -> this.openNextPage(), true));
         this.previousPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + 11, j - 1, false, (button) -> this.openPreviousPage(), true));
 
-        List<Entry> entries = BestiaryContent.getActivePages();
-        for(Entry entry : entries) {
-            this.pages.add(entry.getDescription());
+        List<BestiaryEntry> entries = BestiaryContent.getActivePages();
+        for (BestiaryEntry bestiaryEntry : entries) {
+            this.pages.add(bestiaryEntry.getDescription());
         }
         this.updateButtons();
     }
@@ -100,9 +94,9 @@ public class BestiaryScreen extends Screen {
         this.nextPageButton.visible = this.currentPage < this.countPages() - 1;
     }
 
-    private Entry getCurrentEntry() {
-        List<Entry> entries = BestiaryContent.getActivePages();
-        if(entries.size() == 0 || entries.size() <= currentPage) return Entry.EMPTY;
+    private BestiaryEntry getCurrentEntry() {
+        List<BestiaryEntry> entries = BestiaryContent.getActivePages();
+        if (entries.size() == 0 || entries.size() <= currentPage) return BestiaryEntry.EMPTY;
         return entries.get(currentPage);
     }
 
@@ -122,18 +116,19 @@ public class BestiaryScreen extends Screen {
         int l;
         int m;
         int n = this.textRenderer.getWidth(this.pageIndicatorText);
-        this.textRenderer.draw(matrices, this.pageIndicatorText, (float)(i - n + WIDTH - 44), Math.max(18, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 20), 0);
+        this.textRenderer.draw(matrices, this.pageIndicatorText, (float) (i - n + WIDTH - 44), Math.max(18, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 20), 0);
         BestiaryScreen.PageContent pageContent = this.getPageContent();
         BestiaryScreen.Line[] var15 = pageContent.lines;
         l = var15.length;
 
-        for(m = 0; m < l; ++m) {
+        for (m = 0; m < l; ++m) {
             BestiaryScreen.Line line = var15[m];
-            this.textRenderer.draw(matrices, line.text, (float)line.x, (float)line.y, -16777216);
+            this.textRenderer.draw(matrices, line.text, (float) line.x, (float) line.y, -16777216);
         }
-        Entry entry = getCurrentEntry();
-        if(!entry.equals(Entry.EMPTY)) {
-            drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2 - entry.getYOffset(), entry.getSize(), entry.getEntity());
+        BestiaryEntry bestiaryEntry = getCurrentEntry();
+        if (!bestiaryEntry.equals(BestiaryEntry.EMPTY)) {
+            LivingEntity entity = bestiaryEntry.getEntity();
+            drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2 - bestiaryEntry.getYOffset(), bestiaryEntry.getSize(), entity);
         }
 
         super.render(matrices, mouseX, mouseY, delta);
@@ -142,12 +137,12 @@ public class BestiaryScreen extends Screen {
     public void drawEntity(int x, int y, int size, LivingEntity entity) {
         MatrixStack matrixStack = RenderSystem.getModelViewStack();
         matrixStack.push();
-        matrixStack.translate((float)x, (float)y, 1050F);
+        matrixStack.translate((float) x, (float) y, 1050F);
         matrixStack.scale(1.0F, 1.0F, -1.0F);
         RenderSystem.applyModelViewMatrix();
         MatrixStack matrixStack2 = new MatrixStack();
         matrixStack2.translate(0.0F, 0.0F, 1000.0F);
-        matrixStack2.scale((float)size, (float)size, (float)size);
+        matrixStack2.scale((float) size, (float) size, (float) size);
         Quaternionf quaternionf = (new Quaternionf()).rotateZ(3.1415927F);
         Quaternionf quaternionf2 = (new Quaternionf()).rotateX((float) (-30 * Math.PI / 180));
         quaternionf.mul(quaternionf2);
@@ -229,12 +224,12 @@ public class BestiaryScreen extends Screen {
 
     @Environment(EnvType.CLIENT)
     record PageContent(Line[] lines) {
-            static final BestiaryScreen.PageContent EMPTY;
+        static final BestiaryScreen.PageContent EMPTY;
 
         static {
-                EMPTY = new BestiaryScreen.PageContent(new Line[]{new Line(Style.EMPTY, "", 0, 0)});
-            }
+            EMPTY = new BestiaryScreen.PageContent(new Line[]{new Line(Style.EMPTY, "", 0, 0)});
         }
+    }
 
     @Environment(EnvType.CLIENT)
     static class Line {
@@ -254,6 +249,6 @@ public class BestiaryScreen extends Screen {
     }
 
     @Environment(EnvType.CLIENT)
-        private record Position(int x, int y) {
+    private record Position(int x, int y) {
     }
 }
