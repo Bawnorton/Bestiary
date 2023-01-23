@@ -113,22 +113,27 @@ public class BestiaryScreen extends Screen {
         int i = (this.width - WIDTH) / 2;
         int j = Math.max(2, (this.height - HEIGHT) / 2 - this.HEIGHT / 4);
         this.drawTexture(matrices, i, j, 0, 0, WIDTH, HEIGHT);
-        int l;
-        int m;
-        int n = this.textRenderer.getWidth(this.pageIndicatorText);
-        this.textRenderer.draw(matrices, this.pageIndicatorText, (float) (i - n + WIDTH - 44), Math.max(18, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 20), 0);
         BestiaryScreen.PageContent pageContent = this.getPageContent();
-        BestiaryScreen.Line[] var15 = pageContent.lines;
-        l = var15.length;
+        BestiaryScreen.Line[] lines = pageContent.lines;
 
-        for (m = 0; m < l; ++m) {
-            BestiaryScreen.Line line = var15[m];
+        for (BestiaryScreen.Line line: lines) {
             this.textRenderer.draw(matrices, line.text, (float) line.x, (float) line.y, -16777216);
         }
+
         BestiaryEntry bestiaryEntry = getCurrentEntry();
         if (!bestiaryEntry.equals(BestiaryEntry.EMPTY)) {
             LivingEntity entity = bestiaryEntry.getEntity();
+            if(entity == null) return;
             drawEntity(i + 6 + WIDTH / 4, j + HEIGHT / 2 - bestiaryEntry.getYOffset(), bestiaryEntry.getSize(), entity);
+            Text entityName = entity.getName();
+            int nameWidth = this.textRenderer.getWidth(entityName);
+            int nameHeight = this.textRenderer.fontHeight;
+            matrices.push();
+            float scale = 1.25F;
+            if (entityName.getString().length() > 14) scale = 14F * scale / entityName.getString().length();
+            matrices.scale(scale, scale, scale);
+            this.textRenderer.draw(matrices, entityName, (i + WIDTH / 4F - nameWidth / 2F) / scale, (j + HEIGHT / 1.9F + nameHeight) / scale, 0);
+            matrices.pop();
         }
 
         super.render(matrices, mouseX, mouseY, delta);

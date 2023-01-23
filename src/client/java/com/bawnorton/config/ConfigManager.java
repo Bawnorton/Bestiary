@@ -63,13 +63,6 @@ public class ConfigManager {
         BestiaryClient.LOGGER.info("Loaded %s entries from config".formatted(BestiaryContent.ENTRIES.size()));
     }
 
-    private static LivingEntity createEntity(EntityType<? extends Entity> entityType) {
-        Entity entity = entityType.create(MinecraftClient.getInstance().world);
-        if (entity == null) BestiaryClient.LOGGER.warn("Entity is null: " + entityType);
-        if (entity instanceof LivingEntity livingEntity) return livingEntity;
-        throw new IllegalArgumentException("Entity is not a living entity: " + entityType);
-    }
-
     private static Config load() {
         Config config = Config.getInstance();
         try {

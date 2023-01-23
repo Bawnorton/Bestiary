@@ -7,6 +7,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -46,7 +47,7 @@ public class BestiaryEntry {
         return entityType;
     }
 
-    public LivingEntity getEntity() {
+    public @Nullable LivingEntity getEntity() {
         if(cachedEntity == null) cachedEntity = entityType.create(MinecraftClient.getInstance().world);
         return cachedEntity;
     }
