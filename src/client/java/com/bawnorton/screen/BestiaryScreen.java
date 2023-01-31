@@ -3,6 +3,7 @@ package com.bawnorton.screen;
 import com.bawnorton.bestiary.BestiaryContent;
 import com.bawnorton.bestiary.BestiaryEntry;
 import com.bawnorton.screen.widgets.BestiaryTurnWidget;
+import com.bawnorton.screen.widgets.DraggableWidget;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
@@ -10,6 +11,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -59,6 +61,9 @@ public class BestiaryScreen extends Screen {
         int j = Math.max(153, (this.height - HEIGHT) / 2 - this.HEIGHT / 4 + 151);
         this.nextPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + WIDTH - 31, j, true, (button) -> this.openNextPage(), true));
         this.previousPageButton = this.addDrawableChild(new BestiaryTurnWidget(i + 11, j - 1, false, (button) -> this.openPreviousPage(), true));
+        this.addDrawableChild(new DraggableWidget(ButtonWidget.builder(Text.of("Test"), press -> {
+            System.out.println("Test");
+        }).position(100, 100).size(100, 20).build()));
 
         List<BestiaryEntry> entries = BestiaryContent.getActivePages();
         for (BestiaryEntry bestiaryEntry : entries) {
